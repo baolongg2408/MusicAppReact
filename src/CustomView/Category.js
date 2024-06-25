@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ImageBackground } from 'react-native';
 const Category = ({ cate }) => {
   return (
     <View style={styles.container}>
-      <ImageBackground source={require('../../assets/logo.png')} style={styles.imageBackground} blurRadius={30}>
+      <ImageBackground source={require('../../assets/CD.png')} style={styles.imageBackground} blurRadius={40}>
         <Text style={styles.title}>{cate.name}</Text>
       </ImageBackground>
     </View>
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'italic',
     fontFamily: 'serif',
-    color: 'red',
+    color: '#4aff40',
   },
 });
 

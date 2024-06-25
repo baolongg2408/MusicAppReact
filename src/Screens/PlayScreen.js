@@ -3,21 +3,25 @@ import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity } from '
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPause, faPlay, faForward, faBackward, faRepeat } from '@fortawesome/free-solid-svg-icons';
 import Sound from 'react-native-sound';
-import FastImage from 'react-native-fast-image'; // Import FastImage
+import FastImage from 'react-native-fast-image';
 
 const { width, height } = Dimensions.get('window');
 
 const PlayScreen = ({ route }) => {
-    const { song } = route.params;
+    const { song } = route.params || {};
     const animationValue = useRef(new Animated.Value(-width)).current;
     const rotationValue = useRef(new Animated.Value(0)).current;
     const [isPlaying, setIsPlaying] = useState(false);
     const [sound, setSound] = useState(null);
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
-    const [isRepeat, setIsRepeat] = useState(false); // State for repeat
+    const [isRepeat, setIsRepeat] = useState(false);
 
     useEffect(() => {
+        if (!song || !song.previewUrl) {
+            return;
+        }
+
         Sound.setCategory('Playback');
 
         const soundInstance = new Sound(song.previewUrl, null, (error) => {
@@ -39,7 +43,7 @@ const PlayScreen = ({ route }) => {
                 sound.release();
             }
         };
-    }, [song.previewUrl]);
+    }, [song]);
 
     useEffect(() => {
         Animated.loop(
@@ -53,7 +57,7 @@ const PlayScreen = ({ route }) => {
 
     useEffect(() => {
         let interval = null;
-        if (isPlaying) {
+        if (isPlaying && sound) {
             Animated.loop(
                 Animated.timing(rotationValue, {
                     toValue: 1,
@@ -61,27 +65,25 @@ const PlayScreen = ({ route }) => {
                     useNativeDriver: true,
                 })
             ).start();
-            if (sound) {
-                sound.play((success) => {
-                    if (success) {
-                        if (isRepeat) {
-                            sound.setCurrentTime(0);
-                            sound.play();
-                        } else {
-                            setIsPlaying(false);
-                            setCurrentTime(0);
-                        }
+            sound.play((success) => {
+                if (success) {
+                    if (isRepeat) {
+                        sound.setCurrentTime(0);
+                        sound.play();
+                    } else {
+                        setIsPlaying(false);
+                        setCurrentTime(0);
                     }
+                }
+            });
+            interval = setInterval(() => {
+                sound.getCurrentTime((seconds) => {
+                    setCurrentTime(seconds);
                 });
-                interval = setInterval(() => {
-                    sound.getCurrentTime((seconds) => {
-                        setCurrentTime(seconds);
-                    });
-                }, 1000);
-            }
+            }, 1000);
         } else {
             rotationValue.stopAnimation(() => {
-                rotationValue.setValue(0); // Reset rotation to initial value
+                rotationValue.setValue(0);
             });
             if (sound) {
                 sound.pause();
@@ -99,7 +101,9 @@ const PlayScreen = ({ route }) => {
     }, [isPlaying, rotationValue, sound, isRepeat]);
 
     const togglePlayPause = () => {
-        setIsPlaying(!isPlaying);
+        if (sound) {
+            setIsPlaying(!isPlaying);
+        }
     };
 
     const toggleRepeat = () => {
@@ -125,26 +129,34 @@ const PlayScreen = ({ route }) => {
         return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
+    if (!song) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>No song data available.</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.boderTop}>
                 <View style={styles.nameTop}>
                     <Animated.Text style={[styles.textName, animatedStyle]}>
-                        {song.trackName}
+                        {song.trackName || 'Unknown Track'}
                     </Animated.Text>
                 </View>
-                <Text style={styles.singer}>{song.artistName}</Text>
+                <Text style={styles.singer}>{song.artistName || 'Unknown Artist'}</Text>
             </View>
             <FastImage
                 style={styles.bgplay}
-                source={require('../../assets/gifBG2.gif') } 
-                priority={ FastImage.priority.high}
+                source={require('../../assets/gifBG2.gif')}
+                priority={FastImage.priority.high}
                 resizeMode={FastImage.resizeMode.cover}
                 cacheControl={FastImage.cacheControl.immutable}
             >
                 <View style={styles.cdContainer}>
                     <Animated.Image
-                        source={{ uri: song.artworkUrl100 }}
+                        source={{ uri: song.artworkUrl100 || 'https://via.placeholder.com/200' }}
                         style={[styles.cdImage, cdAnimatedStyle]}
                     />
                 </View>
@@ -185,15 +197,21 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#0006',
+        justifyContent: 'center', // Center the content vertically
+        alignItems: 'center', // Center the content horizontally
     },
     boderTop: {
         borderWidth: 1,
         paddingBottom: 5,
-        backgroundColor: '#0009',
+        backgroundColor: '#0019',
+        width: '100%',
+        alignItems: 'center', // Center text horizontally
     },
     nameTop: {
         width: '100%',
         height: 50,
+        justifyContent: 'center', // Center text vertically
+        alignItems: 'center', // Center text horizontally
     },
     textName: {
         fontSize: 20,
@@ -201,7 +219,6 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     singer: {
-        marginLeft: 20,
         color: '#fff',
     },
     cdContainer: {
@@ -265,10 +282,14 @@ const styles = StyleSheet.create({
         color: '#1DB954',
         fontWeight: 'bold',
     },
-    bgplay:{
+    bgplay: {
         width: '100%',
         height: '90%',
-    }
+    },
+    errorText: {
+        fontSize: 18,
+        color: '#fff',
+    },
 });
 
 export default PlayScreen;

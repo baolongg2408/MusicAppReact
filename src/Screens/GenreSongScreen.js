@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import axios from 'axios';
 import CustomSong from '../CustomView/CustomSong';
 
-const GenreSongsScreen = ({ route}) => {
+const GenreSongsScreen = ({ route,navigation}) => {
   const { genres } = route.params || { genres: '' };
   const [songs, setSongs] = useState([]);
 
   useEffect(() => {
+    console.log(genres);
     const fetchSongs = async () => {
       try {
         const response = await axios.get('https://itunes.apple.com/search', {
@@ -20,7 +21,6 @@ const GenreSongsScreen = ({ route}) => {
         });
         setSongs(response.data.results);
       } catch (error) {
-        console.error('Error fetching songs', error.response?.data || error.message);
       }
     };
 

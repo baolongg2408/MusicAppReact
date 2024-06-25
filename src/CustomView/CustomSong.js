@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPause, faPlay } from '@fortawesome/free-solid-svg-icons';
+import LinearGradient from 'react-native-linear-gradient';
 
 const CustomSong = ({ song }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -11,7 +12,12 @@ const CustomSong = ({ song }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#4aff40', '#ff0088']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.container}
+    >
       <Image source={{ uri: song.imageUri }} style={styles.image} />
       <View style={styles.textContainer}>
         <Text style={styles.title}>{song.title}</Text>
@@ -21,7 +27,7 @@ const CustomSong = ({ song }) => {
       <TouchableOpacity onPress={togglePlayPause}>
         <FontAwesomeIcon icon={isPlaying ? faPause : faPlay} size={24} style={styles.icon} />
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -30,7 +36,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOpacity: 0.1,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity,Text, TextInput } from 'react-native';
 import axios from 'axios';
 import CustomSong from '../CustomView/CustomSong';
 import FastImage from 'react-native-fast-image';
@@ -9,12 +9,12 @@ const HomeScreen = ({ navigation }) => {
   const [topSongs, setTopSongs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [genres, setGenres] = useState([
-    { genreName: 'Pop' },
-    { genreName: 'Rock' },
-    { genreName: 'Jazz' },
-    { genreName: 'Hip Hop' },
-    { genreName: 'Classical' },
-    { genreName: 'Country' },
+    { genreName: 'Ballad' },
+    { genreName: 'UK' },
+    { genreName: 'Vietnamese' },
+    { genreName: 'Story' },
+    { genreName: 'Asia' },
+    { genreName: 'US' },
   ]);
 
   useEffect(() => {
@@ -75,6 +75,9 @@ const HomeScreen = ({ navigation }) => {
         
         {searchTerm === '' && (
           <View style={styles.genreContainer}>
+            <Text style={styles.genreTitle}>
+              Genre
+            </Text>
             <FlatList
               data={genres}
               renderItem={renderGenre}
@@ -116,15 +119,23 @@ const styles = StyleSheet.create({
   },
   genreContainer: {
     height: '25%', // Occupy 1/4 of the screen
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   genreList: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   songList: {
     flex: 1, // Occupy the remaining screen space
     marginTop: 10,
   },
+  genreTitle:{
+    color:'#4aff40',
+    fontSize:25,
+    fontFamily:'serif',
+    fontWeight:'bold'
+  }
 });
 
 export default HomeScreen;
