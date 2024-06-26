@@ -1,9 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPause, faPlay, faForward, faBackward, faRepeat } from '@fortawesome/free-solid-svg-icons';
+import { faPause, faPlay, faForward, faBackward, faRepeat, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import Sound from 'react-native-sound';
 import FastImage from 'react-native-fast-image';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,6 +18,16 @@ const PlayScreen = ({ route }) => {
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [isRepeat, setIsRepeat] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(false);
+
+    //Gọi set trạng thái yêu thích
+   useEffect(()=>{
+    if(song){
+        checkIfFavorite(song.trackId).then((isFavorite)=>{
+            setIsFavorite(isFavorite);
+        });
+    }
+   },[song]);
 
     useEffect(() => {
         if (!song || !song.previewUrl) {
@@ -46,6 +58,7 @@ const PlayScreen = ({ route }) => {
     }, [song]);
 
     useEffect(() => {
+        checkFavoriteStatus();
         Animated.loop(
             Animated.timing(animationValue, {
                 toValue: width,
@@ -55,6 +68,26 @@ const PlayScreen = ({ route }) => {
         ).start();
     }, [animationValue]);
 
+    useEffect(() => {
+        let interval = null;
+        if (isPlaying && sound && isRepeat) {
+            interval = setInterval(() => {
+                sound.getCurrentTime((seconds) => {
+                    if (seconds >= duration - 1) { // Check if near the end
+                        sound.setCurrentTime(0); // Reset to start
+                    }
+                });
+            }, 1000);
+        }
+        
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+    }, [isPlaying, sound, isRepeat]);
+
+    
     useEffect(() => {
         let interval = null;
         if (isPlaying && sound) {
@@ -70,6 +103,7 @@ const PlayScreen = ({ route }) => {
                     if (isRepeat) {
                         sound.setCurrentTime(0);
                         sound.play();
+                        console.log(isRepeat);
                     } else {
                         setIsPlaying(false);
                         setCurrentTime(0);
@@ -108,6 +142,64 @@ const PlayScreen = ({ route }) => {
 
     const toggleRepeat = () => {
         setIsRepeat(!isRepeat);
+    };
+
+    const toggleFavorite = async () => {
+        try {
+            const favoriteSongs = await AsyncStorage.getItem('favoriteSongs');
+            const favoriteSongsList = favoriteSongs ? JSON.parse(favoriteSongs) : [];
+    
+            // Kiểm tra xem bài hát hiện tại đã được thêm vào yêu thích chưa
+            const existingIndex = favoriteSongsList.findIndex((s) => s.trackId === song.trackId);
+    
+            if (existingIndex !== -1) {
+                // Nếu đã tồn tại trong danh sách, loại bỏ khỏi danh sách yêu thích
+                favoriteSongsList.splice(existingIndex, 1);
+                await AsyncStorage.setItem('favoriteSongs', JSON.stringify(favoriteSongsList));
+                setIsFavorite(false);
+            } else {
+                // Nếu chưa tồn tại trong danh sách, thêm vào danh sách yêu thích
+                favoriteSongsList.push({
+                    trackId: song.trackId,
+                    trackName: song.trackName,
+                    artistName: song.artistName,
+                    author: song.collectionName,
+                    imageUri: song.artworkUrl100,
+                });
+                await AsyncStorage.setItem('favoriteSongs', JSON.stringify(favoriteSongsList));
+                setIsFavorite(true);
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+        }
+    };
+    //Hàm kiểm tra bài hát đã được yêu thích hay chưa
+    const checkIfFavorite = async (paramId) => {
+        try {
+            const favoriteSongs = await AsyncStorage.getItem('favoriteSongs');
+            if (!favoriteSongs) {
+                return false; // Nếu không có dữ liệu yêu thích
+            }
+    
+            const favoriteSongsList = JSON.parse(favoriteSongs);
+            const isFavorite = favoriteSongsList.some((song) => song.trackId === paramId);
+            return isFavorite;
+        } catch (error) {
+            console.error('Error checking favorite status:', error);
+            return false;
+        }
+    };
+    
+
+    const checkFavoriteStatus = async () => {
+        try {
+            const favoriteSongs = await AsyncStorage.getItem('favoriteSongs');
+            const favoriteSongsList = favoriteSongs ? JSON.parse(favoriteSongs) : [];
+            const isFavoriteSong = favoriteSongsList.some((s) => s.trackId === song.trackId);
+            setIsFavorite(isFavoriteSong);
+        } catch (error) {
+            console.error('Error checking favorite status:', error);
+        }
     };
 
     const animatedStyle = {
@@ -186,6 +278,9 @@ const PlayScreen = ({ route }) => {
                             <FontAwesomeIcon icon={faRepeat} size={24} style={[styles.icon, isRepeat && styles.repeatActive]} />
                             {isRepeat && <Text style={styles.repeatText}>1</Text>}
                         </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={toggleFavorite}>
+                        <FontAwesomeIcon icon={isFavorite ? faHeartSolid : faHeartRegular} size={24} style={[styles.icon, isFavorite && styles.favoriteIcon]} />
                     </TouchableOpacity>
                 </View>
             </FastImage>
@@ -281,6 +376,9 @@ const styles = StyleSheet.create({
         right: -10,
         color: '#1DB954',
         fontWeight: 'bold',
+    },
+    favoriteIcon: {
+        color: 'red', // Red color to indicate favorite
     },
     bgplay: {
         width: '100%',

@@ -5,6 +5,7 @@ import HomeScreen from '../Screens/HomeScreen';
 import PlayScreen from '../Screens/PlayScreen';
 import SettingScreen from '../Screens/SettingScreen';
 import GenreSongsScreen from '../Screens/GenreSongScreen';
+import FavoriteListScreen from '../Screens/FavoriteScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faHome, faPlay, faCog } from '@fortawesome/free-solid-svg-icons';
 
@@ -15,6 +16,7 @@ const HomeStackScreen = () => (
   <stack.Navigator screenOptions={{ headerShown: false }}>
     <stack.Screen name="House" component={HomeScreen} />
     <stack.Screen name="GenreSongs" component={GenreSongsScreen} />
+    <stack.Screen name='FavoriteListScreen' component={FavoriteListScreen}/>
   </stack.Navigator>
 );
 
